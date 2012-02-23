@@ -19,7 +19,7 @@ class Menu
       width: 320
       height: 460
       isShow: false
-      backgroundColor: '#cff'
+      backgroundColor: '#000099'
           
 
     # Functions  

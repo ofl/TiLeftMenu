@@ -8,11 +8,12 @@ trace = function(mes) {
 mix = (require('helpers/util')).mix;
 Window = (function() {
   function Window() {
-    var Z_INDEX_BOTTOM, Z_INDEX_TOP, currentView, leftView, mainView1, mainView2, rightView, scrollView, tab, tabGroup, window, _catchBubble, _hideMenu, _showMenu, _switchView;
+    var Z_INDEX_BOTTOM, Z_INDEX_TOP, currentView, leftView, mainView1, mainView2, offset, rightView, scrollView, tab, tabGroup, window, _catchBubble, _hideMenu, _showMenu, _switchView;
     trace("start constructor");
     currentView = null;
     Z_INDEX_TOP = 3;
     Z_INDEX_BOTTOM = 0;
+    offset = null;
     window = Ti.UI.createWindow($$.window);
     tab = Ti.UI.createTab({
       window: window
@@ -28,6 +29,10 @@ Window = (function() {
       scrollType: "vertical",
       contentWidth: 860,
       contentHeight: 'auto',
+      contentOffset: {
+        x: -250,
+        y: 0
+      },
       showVerticalScrollIndicator: false,
       showHorizontalScrollIndicator: false,
       width: 320,
@@ -39,6 +44,7 @@ Window = (function() {
     mainView2 = new (require("" + dir + "/MainView2"))();
     mainView2.zIndex = Z_INDEX_BOTTOM;
     mainView2.left = 250;
+    mainView2.visible = false;
     scrollView.add(mainView2);
     mainView1 = new (require("" + dir + "/MainView1"))();
     mainView1.zIndex = Z_INDEX_BOTTOM;
@@ -126,6 +132,24 @@ Window = (function() {
       });
       currentView.animate(beHidden);
     };
+    scrollView.addEventListener('dragStart', function(e) {
+      trace('ahooo');
+      scrollView.contentWidth = 860;
+      mainView1.left = 250;
+    });
+    scrollView.addEventListener('dragEnd', function(e) {
+      if (offset < 200) {
+        scrollView.scrollTo(0, 0);
+      } else if (offset < 500) {
+        scrollView.scrollTo(250, 0);
+      } else {
+        scrollView.scrollTo(500, 0);
+      }
+    });
+    scrollView.addEventListener('scroll', function(e) {
+      offset = e.x;
+      trace(e.x);
+    });
     leftView.addEventListener('bubble', _catchBubble);
     rightView.addEventListener('bubble', _catchBubble);
     mainView1.addEventListener('bubble', _catchBubble);

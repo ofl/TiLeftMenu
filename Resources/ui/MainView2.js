@@ -15,7 +15,7 @@ Menu = (function() {
       width: 320,
       height: 460,
       isShow: false,
-      backgroundColor: '#cff'
+      backgroundColor: '#000099'
     });
     refresh = function() {
       var data, item, row, rows, _i, _len;

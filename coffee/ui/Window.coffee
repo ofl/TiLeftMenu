@@ -19,6 +19,8 @@ class Window
     currentView = null
     Z_INDEX_TOP = 3
     Z_INDEX_BOTTOM = 0
+    
+    offset = null
 
         
     # UI
@@ -41,6 +43,7 @@ class Window
       scrollType: "vertical"
       contentWidth:860
       contentHeight:'auto'
+      contentOffset:{x:-250, y:0}
       showVerticalScrollIndicator:false
       showHorizontalScrollIndicator:false        
       width: 320
@@ -52,6 +55,7 @@ class Window
     mainView2 = new (require "#{dir}/MainView2")()
     mainView2.zIndex = Z_INDEX_BOTTOM
     mainView2.left = 250
+    mainView2.visible = false
     scrollView.add mainView2
     
     mainView1 = new (require "#{dir}/MainView1")()
@@ -131,6 +135,29 @@ class Window
       
 
     # Event Listeners
+      
+    scrollView.addEventListener 'dragStart', (e)->
+      trace 'ahooo'
+      scrollView.contentWidth = 860
+      mainView1.left = 250
+      return
+      
+    scrollView.addEventListener 'dragEnd', (e)->
+      # scrollView.contentWidth -=  offset
+      # mainView1.left = 0
+      
+      if offset <200
+        scrollView.scrollTo 0,0
+      else if offset < 500
+        scrollView.scrollTo 250,0
+      else
+        scrollView.scrollTo 500,0
+      return
+      
+    scrollView.addEventListener 'scroll', (e)->
+      offset = e.x
+      trace e.x
+      return
       
     leftView.addEventListener 'bubble', _catchBubble
     rightView.addEventListener 'bubble', _catchBubble
