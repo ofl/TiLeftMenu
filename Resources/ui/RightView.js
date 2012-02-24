@@ -11,8 +11,8 @@ Menu = (function() {
     var refresh, tableView, view, _bubble;
     trace("start constructor");
     view = Ti.UI.createView({
-      left: 0,
-      width: 320,
+      left: 30,
+      width: 290,
       height: 460,
       isShow: false
     });

@@ -26,17 +26,6 @@ class Menu
     
   
     refresh = ()->
-      data = [
-        {title: 'todo'}
-        {title: 'setting'}        
-      ]
-      rows = []
-      for item in data
-        row = Ti.UI.createTableViewRow
-          title: item.title
-        rows.push row
-      
-      tableView.setData rows
       return
      
     _bubble = (type, options, propagation, source)->

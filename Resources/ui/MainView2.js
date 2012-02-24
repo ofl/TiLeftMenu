@@ -17,25 +17,7 @@ Menu = (function() {
       isShow: false,
       backgroundColor: '#000099'
     });
-    refresh = function() {
-      var data, item, row, rows, _i, _len;
-      data = [
-        {
-          title: 'todo'
-        }, {
-          title: 'setting'
-        }
-      ];
-      rows = [];
-      for (_i = 0, _len = data.length; _i < _len; _i++) {
-        item = data[_i];
-        row = Ti.UI.createTableViewRow({
-          title: item.title
-        });
-        rows.push(row);
-      }
-      tableView.setData(rows);
-    };
+    refresh = function() {};
     _bubble = function(type, options, propagation, source) {
       view.fireEvent('bubble', {
         btype: type,

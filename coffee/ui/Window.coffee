@@ -33,20 +33,20 @@ class Window
 
 
       
-    leftView = new (require "#{dir}/LeftView")()
-    window.add leftView
-      
     rightView = new (require "#{dir}/RightView")()
     window.add rightView
+      
+    leftView = new (require "#{dir}/LeftView")()
+    window.add leftView
 
     scrollView = Ti.UI.createScrollView
       scrollType: "vertical"
-      contentWidth:860
+      contentWidth:880
       contentHeight:'auto'
       contentOffset:{x:-250, y:0}
       showVerticalScrollIndicator:false
       showHorizontalScrollIndicator:false        
-      width: 320
+      width: 'auto'
       height: 'auto'
       top: 0
       left: 0    
@@ -54,14 +54,20 @@ class Window
     
     mainView2 = new (require "#{dir}/MainView2")()
     mainView2.zIndex = Z_INDEX_BOTTOM
-    mainView2.left = 250
+    mainView2.left = 260
     mainView2.visible = false
     scrollView.add mainView2
     
     mainView1 = new (require "#{dir}/MainView1")()
     mainView1.zIndex = Z_INDEX_BOTTOM
-    mainView1.left = 250
+    mainView1.left = 260
     scrollView.add mainView1
+
+    dummyView = Ti.UI.createView
+      width: 40
+      height: 460
+      left: 280
+      zIndex:20
     
     # sh.Shadow mainView1, 
       # shadowRadius: 2
@@ -107,14 +113,14 @@ class Window
     _showMenu = ()->
       menuView.refresh()
       menuView.isShow = ! menuView.isShow
-      left = if menuView.isShow then 290 else 0
+      left = if menuView.isShow then 280 else 0
       animation = Ti.UI.createAnimation left: left, duration: 350
       currentView.animate animation
       return
       
     _hideMenu = ()->
       menuView.isShow = ! menuView.isShow
-      left = if menuView.isShow then 290 else 0
+      left = if menuView.isShow then 280 else 0
       animation = Ti.UI.createAnimation left: left, duration: 350
       currentView.animate animation
       return
@@ -138,8 +144,12 @@ class Window
       
     scrollView.addEventListener 'dragStart', (e)->
       trace 'ahooo'
-      scrollView.contentWidth = 860
-      mainView1.left = 250
+      # scrollView.contentWidth = 860
+      # mainView1.left = 250
+      # rightView.zIndex = 3
+      # rightView.width = 320
+      scrollView.left = 0
+      scrollView.width = 320
       return
       
     scrollView.addEventListener 'dragEnd', (e)->
@@ -148,15 +158,49 @@ class Window
       
       if offset <200
         scrollView.scrollTo 0,0
+        window.add dummyView
+        scrollView.canCancelEvents = false
+        scrollView.touchEnabled = false
+        # setTimeout ()->
+          # rightView.width = 250
+          # rightView.zIndex = 15
+        # , 400
       else if offset < 500
-        scrollView.scrollTo 250,0
+        scrollView.scrollTo 260,0
       else
-        scrollView.scrollTo 500,0
+        scrollView.scrollTo 520,0
+        scrollView.width = 60
       return
+      
+    dummyView.addEventListener 'touchmove', (e)->
+      trace 'koko'
+      window.remove dummyView
+      scrollView.touchEnabled = true
+      scrollView.fireEvent 'dragStart'
+      return
+
+    mainView1.addEventListener 'singletap', (e)->
+      trace 'koko'
+      return
+
       
     scrollView.addEventListener 'scroll', (e)->
       offset = e.x
-      trace e.x
+      trace offset
+      if offset < 150
+        # leftView.visible = true
+        # rightView.visible = false
+        # leftView.width = 320 - offset
+        leftView.visible = true
+      else if offset < 280
+        leftView.width = 280
+        leftView.visible = true
+      else
+        leftView.width = 30
+        leftView.visible = true
+        # leftView.visible = false
+        # rightView.visible = true
+        # leftView.visible = false
       return
       
     leftView.addEventListener 'bubble', _catchBubble

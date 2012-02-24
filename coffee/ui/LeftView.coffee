@@ -16,7 +16,7 @@ class Menu
 
     view = Ti.UI.createView 
       left: 0
-      width: 320
+      width: 290
       height: 460
       isShow: false
       
