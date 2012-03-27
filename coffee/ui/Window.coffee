@@ -9,7 +9,6 @@ mix = (require 'helpers/util').mix
 
 # sh = require 'com.infinery.ds'
 
-
 class Window        
   constructor: ()->
     trace "start constructor"
@@ -18,6 +17,8 @@ class Window
     
     touchStartX = 0
     touchStarted = false
+    
+    color = 'red'
     
     # UI
 
@@ -29,28 +30,22 @@ class Window
 
       
     detailView = new (require "#{dir}/Detail")()
+    detailView.left = 30
     detailView.refresh()
     window.add detailView
       
     menuView = new (require "#{dir}/Menu")()
+    menuView.width = 280
     menuView.refresh()
     window.add menuView
     
-    blueView = new (require "#{dir}/Blue")()
-    blueView.visible = false
-    window.add blueView
-    
-    redView = new (require "#{dir}/Red")()
-    window.add redView
-
-    currentView = redView  #現在のview。Red or Blue
-    currentView.isOpened = false
+    floatWindow = new (require "#{dir}/FloatWindow")()
+    window.add floatWindow
         
-    # sh.Shadow redView, 
+    # sh.Shadow floatWindow, 
       # shadowRadius: 2
       # shadowOpacity: 0.6
       # shadowOffset: {x: -5, y: 5}    
-
 
     # Functions  
      
@@ -65,17 +60,17 @@ class Window
     _catchBubble = (e)->
       if e.btype is 'didSelectView'
         if e.boptions.index is 0
-          nextView = redView
+          nextColor = 'red'
         else
-          nextView = blueView
-        if nextView is currentView
+          nextColor = 'blue'
+        if nextColor is color
           _toggleMenu 'left', true
         else
-          _switchView nextView
+          _switchColor nextColor
       else if e.btype is 'showMenu'
-        _toggleMenu 'left', currentView.isOpened
+        _toggleMenu 'left', floatWindow.isOpened
       else if e.btype is 'showDetail'
-        _toggleMenu 'right', currentView.isOpened
+        _toggleMenu 'right', floatWindow.isOpened
           
       if e.bpropagation
         _bubble e.btype, e.boptions, true, e.source
@@ -84,69 +79,79 @@ class Window
     _toggleMenu = (direction, isOpened)->
       if direction is 'left'
         left = !isOpened && 260 || 0
+        menuView.width = 280            
       else
         left = !isOpened && -260 || 0
-      trace isOpened        
-      currentView.animate mix($$.animation, left: left)
+        menuView.width = 30            
+      floatWindow.animate mix($$.animation, left: left)
         , ()->
-          currentView.isOpened = !isOpened
+          floatWindow.isOpened = !isOpened
           return
       return
       
-    _switchView = (nextView)->
+    _switchColor = (nextColor)->
+      menuView.width = 320            
       animation = 
         left: 320
         curve: Ti.UI.iOS.ANIMATION_CURVE_EASE_OUT
         duration: 300
         
-      currentView.animate animation, ()->
-        nextView.visible = true
-        currentView.visible = false
-        nextView.animate mix($$.animation, left: 0)
-          , ()->
-            currentView = nextView
-            currentView.isOpened = false
-            return
+      floatWindow.animate animation, ()->
+        floatWindow.refresh nextColor
+        floatWindow.animate mix($$.animation, left: 0), ()->
+          color = nextColor
+          floatWindow.isOpened = false
+          menuView.width = 280            
+          return
         return
+      return
+      
+    _touchHandler = (e)->
+      switch e.type
+        when 'touchstart'
+          touchStartX = parseInt e.x, 10
+              
+        when 'touchmove'
+          x = parseInt e.globalPoint.x, 10
+          newLeft = x - touchStartX
+          if touchStarted
+            if newLeft <= 260 && newLeft >= -260
+              floatWindow.left = newLeft
+          if newLeft > 30 || newLeft < -30 
+            touchStarted = true
+          if newLeft < 0
+            menuView.width = 30
+          else
+            menuView.width = 280            
+                     
+        when 'touchend'
+          touchStarted = false
+          if  floatWindow.left < 0
+            if  floatWindow.left <= -140
+              floatWindow.animate mix($$.animation, left: -260), ()->
+                floatWindow.isOpened = true
+            else
+              floatWindow.animate mix($$.animation, left: 0), ()->
+                floatWindow.isOpened = false 
+          else 
+            if  floatWindow.left >= 140 
+              floatWindow.animate mix($$.animation, left: 260), ()->
+                floatWindow.isOpened = true
+            else
+              floatWindow.animate mix($$.animation, left: 0), ()->
+                floatWindow.isOpened = false 
       return
 
 
     # Event Listeners      
 
-    currentView.addEventListener 'touchstart', (e)->
-      touchStartX = parseInt e.x,10
-      return
-
-    currentView.addEventListener 'touchend', (e)->
-      touchStarted = false
-      if  currentView.left < 0
-        if  currentView.left <= -140
-          currentView.animate mix($$.animation, left: -260)
-          currentView.isOpened = true
-        else
-          currentView.animate mix($$.animation, left: 0)
-          isToggled = false
-      else 
-        if  currentView.left >= 140 
-          currentView.animate mix($$.animation, left: 260)
-          currentView.isOpened = true
-        else
-          currentView.animate mix($$.animation, left: 0)
-          currentView.isOpened = false
-
-    currentView.addEventListener 'touchmove',(e)->
-      x = parseInt e.globalPoint.x, 10
-      newLeft = x - touchStartX
-      if touchStarted
-        if newLeft <= 150 && newLeft >= -150
-          currentView.left = newLeft
-      if newLeft > 30 || newLeft < -30 
-        touchStarted = true
+    floatWindow.addEventListener 'touchstart', _touchHandler
+    floatWindow.addEventListener 'touchmove', _touchHandler
+    floatWindow.addEventListener 'touchend', _touchHandler
         
     menuView.addEventListener 'bubble', _catchBubble
     detailView.addEventListener 'bubble', _catchBubble
-    redView.addEventListener 'bubble', _catchBubble
-    blueView.addEventListener 'bubble', _catchBubble
+    floatWindow.addEventListener 'bubble', _catchBubble
 
     # Disclose
     
@@ -156,3 +161,4 @@ class Window
 trace "end load"
     
 module.exports = Window
+

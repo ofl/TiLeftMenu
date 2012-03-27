@@ -8,10 +8,11 @@ trace = function(mes) {
 mix = (require('helpers/util')).mix;
 Window = (function() {
   function Window() {
-    var blueView, currentView, detailView, menuView, redView, tab, tabGroup, touchStartX, touchStarted, window, _bubble, _catchBubble, _switchView, _toggleMenu;
+    var color, detailView, floatWindow, menuView, tab, tabGroup, touchStartX, touchStarted, window, _bubble, _catchBubble, _switchColor, _toggleMenu, _touchHandler;
     trace("start constructor");
     touchStartX = 0;
     touchStarted = false;
+    color = 'red';
     window = Ti.UI.createWindow($$.window);
     tab = Ti.UI.createTab({
       window: window
@@ -20,18 +21,15 @@ Window = (function() {
       tabs: [tab]
     });
     detailView = new (require("" + dir + "/Detail"))();
+    detailView.left = 30;
     detailView.refresh();
     window.add(detailView);
     menuView = new (require("" + dir + "/Menu"))();
+    menuView.width = 280;
     menuView.refresh();
     window.add(menuView);
-    blueView = new (require("" + dir + "/Blue"))();
-    blueView.visible = false;
-    window.add(blueView);
-    redView = new (require("" + dir + "/Red"))();
-    window.add(redView);
-    currentView = redView;
-    currentView.isOpened = false;
+    floatWindow = new (require("" + dir + "/FloatWindow"))();
+    window.add(floatWindow);
     _bubble = function(type, options, propagation, source) {
       window.fireEvent('bubble', {
         btype: type,
@@ -41,22 +39,22 @@ Window = (function() {
       });
     };
     _catchBubble = function(e) {
-      var nextView;
+      var nextColor;
       if (e.btype === 'didSelectView') {
         if (e.boptions.index === 0) {
-          nextView = redView;
+          nextColor = 'red';
         } else {
-          nextView = blueView;
+          nextColor = 'blue';
         }
-        if (nextView === currentView) {
+        if (nextColor === color) {
           _toggleMenu('left', true);
         } else {
-          _switchView(nextView);
+          _switchColor(nextColor);
         }
       } else if (e.btype === 'showMenu') {
-        _toggleMenu('left', currentView.isOpened);
+        _toggleMenu('left', floatWindow.isOpened);
       } else if (e.btype === 'showDetail') {
-        _toggleMenu('right', currentView.isOpened);
+        _toggleMenu('right', floatWindow.isOpened);
       }
       if (e.bpropagation) {
         _bubble(e.btype, e.boptions, true, e.source);
@@ -66,83 +64,98 @@ Window = (function() {
       var left;
       if (direction === 'left') {
         left = !isOpened && 260 || 0;
+        menuView.width = 280;
       } else {
         left = !isOpened && -260 || 0;
+        menuView.width = 30;
       }
-      trace(isOpened);
-      currentView.animate(mix($$.animation, {
+      floatWindow.animate(mix($$.animation, {
         left: left
       }), function() {
-        currentView.isOpened = !isOpened;
+        floatWindow.isOpened = !isOpened;
       });
     };
-    _switchView = function(nextView) {
+    _switchColor = function(nextColor) {
       var animation;
+      menuView.width = 320;
       animation = {
         left: 320,
         curve: Ti.UI.iOS.ANIMATION_CURVE_EASE_OUT,
         duration: 300
       };
-      currentView.animate(animation, function() {
-        nextView.visible = true;
-        currentView.visible = false;
-        nextView.animate(mix($$.animation, {
+      floatWindow.animate(animation, function() {
+        floatWindow.refresh(nextColor);
+        floatWindow.animate(mix($$.animation, {
           left: 0
         }), function() {
-          currentView = nextView;
-          currentView.isOpened = false;
+          color = nextColor;
+          floatWindow.isOpened = false;
+          menuView.width = 280;
         });
       });
     };
-    currentView.addEventListener('touchstart', function(e) {
-      touchStartX = parseInt(e.x, 10);
-    });
-    currentView.addEventListener('touchend', function(e) {
-      var isToggled;
-      touchStarted = false;
-      if (currentView.left < 0) {
-        if (currentView.left <= -140) {
-          currentView.animate(mix($$.animation, {
-            left: -260
-          }));
-          return currentView.isOpened = true;
-        } else {
-          currentView.animate(mix($$.animation, {
-            left: 0
-          }));
-          return isToggled = false;
-        }
-      } else {
-        if (currentView.left >= 140) {
-          currentView.animate(mix($$.animation, {
-            left: 260
-          }));
-          return currentView.isOpened = true;
-        } else {
-          currentView.animate(mix($$.animation, {
-            left: 0
-          }));
-          return currentView.isOpened = false;
-        }
-      }
-    });
-    currentView.addEventListener('touchmove', function(e) {
+    _touchHandler = function(e) {
       var newLeft, x;
-      x = parseInt(e.globalPoint.x, 10);
-      newLeft = x - touchStartX;
-      if (touchStarted) {
-        if (newLeft <= 150 && newLeft >= -150) {
-          currentView.left = newLeft;
-        }
+      switch (e.type) {
+        case 'touchstart':
+          touchStartX = parseInt(e.x, 10);
+          break;
+        case 'touchmove':
+          x = parseInt(e.globalPoint.x, 10);
+          newLeft = x - touchStartX;
+          if (touchStarted) {
+            if (newLeft <= 260 && newLeft >= -260) {
+              floatWindow.left = newLeft;
+            }
+          }
+          if (newLeft > 30 || newLeft < -30) {
+            touchStarted = true;
+          }
+          if (newLeft < 0) {
+            menuView.width = 30;
+          } else {
+            menuView.width = 280;
+          }
+          break;
+        case 'touchend':
+          touchStarted = false;
+          if (floatWindow.left < 0) {
+            if (floatWindow.left <= -140) {
+              floatWindow.animate(mix($$.animation, {
+                left: -260
+              }), function() {
+                return floatWindow.isOpened = true;
+              });
+            } else {
+              floatWindow.animate(mix($$.animation, {
+                left: 0
+              }), function() {
+                return floatWindow.isOpened = false;
+              });
+            }
+          } else {
+            if (floatWindow.left >= 140) {
+              floatWindow.animate(mix($$.animation, {
+                left: 260
+              }), function() {
+                return floatWindow.isOpened = true;
+              });
+            } else {
+              floatWindow.animate(mix($$.animation, {
+                left: 0
+              }), function() {
+                return floatWindow.isOpened = false;
+              });
+            }
+          }
       }
-      if (newLeft > 30 || newLeft < -30) {
-        return touchStarted = true;
-      }
-    });
+    };
+    floatWindow.addEventListener('touchstart', _touchHandler);
+    floatWindow.addEventListener('touchmove', _touchHandler);
+    floatWindow.addEventListener('touchend', _touchHandler);
     menuView.addEventListener('bubble', _catchBubble);
     detailView.addEventListener('bubble', _catchBubble);
-    redView.addEventListener('bubble', _catchBubble);
-    blueView.addEventListener('bubble', _catchBubble);
+    floatWindow.addEventListener('bubble', _catchBubble);
     trace("end constructor");
     return tabGroup;
   }

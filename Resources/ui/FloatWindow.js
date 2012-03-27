@@ -1,52 +1,58 @@
-var $$, View, dir, mix, mod, trace;
+var $$, Window, dir, mix, mod, trace;
 dir = 'ui';
-mod = "" + dir + "/Blue";
+mod = "" + dir + "/FloatWindow";
 $$ = (require("" + dir + "/style")).style;
 trace = function(mes) {
   return Ti.API.info("" + mod + ":" + mes);
 };
 mix = (require('helpers/util')).mix;
-View = (function() {
-  function View(tab) {
-    var leftBtn, refresh, rightBtn, view, _bubble;
+Window = (function() {
+  function Window() {
+    var leftBtn, refresh, rightBtn, window, _bubble, _catchBubble;
     trace("start constructor");
-    view = Ti.UI.createView({
+    window = Ti.UI.createWindow(mix($$.window, {
       left: 0,
       width: 320,
       height: 460,
-      isShow: false,
-      backgroundColor: '#000099'
-    });
+      backgroundColor: '#990000'
+    }));
     leftBtn = Ti.UI.createButton(mix($$.menuBtn, {
       left: 10,
       title: 'Left'
     }));
-    view.add(leftBtn);
+    window.add(leftBtn);
     rightBtn = Ti.UI.createButton(mix($$.menuBtn, {
       right: 10,
       title: 'Right'
     }));
-    view.add(rightBtn);
-    refresh = function() {};
+    window.add(rightBtn);
+    refresh = function(color) {
+      if (color === 'red') {
+        window.backgroundColor = '#990000';
+      } else {
+        window.backgroundColor = '#000099';
+      }
+    };
     _bubble = function(type, options, propagation, source) {
-      view.fireEvent('bubble', {
+      window.fireEvent('bubble', {
         btype: type,
         boptions: options || {},
         bpropagation: propagation || true,
         bsource: source || mod
       });
     };
+    _catchBubble = function(e) {};
     leftBtn.addEventListener('click', function() {
       _bubble('showMenu');
     });
     rightBtn.addEventListener('click', function() {
       _bubble('showDetail');
     });
-    view.refresh = refresh;
+    window.refresh = refresh;
     trace("end constructor");
-    return view;
+    return window;
   }
-  return View;
+  return Window;
 })();
 trace("end load");
-module.exports = View;
+module.exports = Window;
