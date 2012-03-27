@@ -1,7 +1,7 @@
 # Shortcuts
 
 dir =  'ui'
-mod =  "#{dir}/LeftView"
+mod =  "#{dir}/Menu"
 
 $$ = (require "#{dir}/style").style
 trace = (mes)-> Ti.API.info  "#{mod}:#{mes}"

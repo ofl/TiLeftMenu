@@ -1,6 +1,6 @@
 var $$, Detail, dir, mix, mod, trace;
 dir = 'ui';
-mod = "" + dir + "/RightView";
+mod = "" + dir + "/Detail";
 $$ = (require("" + dir + "/style")).style;
 trace = function(mes) {
   return Ti.API.info("" + mod + ":" + mes);
