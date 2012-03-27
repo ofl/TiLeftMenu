@@ -8,10 +8,10 @@ trace = function(mes) {
 mix = (require('helpers/util')).mix;
 Window = (function() {
   function Window() {
-    var blueView, currentView, detailView, dummyView, menuView, offset, redView, scrollView, tab, tabGroup, window, _bubble, _catchBubble, _hideDetail, _hideMenu, _showDetail, _showMenu, _switchView;
+    var blueView, currentView, detailView, menuView, redView, tab, tabGroup, touchStartX, touchStarted, window, _bubble, _catchBubble, _switchView, _toggleMenu;
     trace("start constructor");
-    currentView = null;
-    offset = null;
+    touchStartX = 0;
+    touchStarted = false;
     window = Ti.UI.createWindow($$.window);
     tab = Ti.UI.createTab({
       window: window
@@ -25,40 +25,13 @@ Window = (function() {
     menuView = new (require("" + dir + "/Menu"))();
     menuView.refresh();
     window.add(menuView);
-    scrollView = Ti.UI.createScrollView({
-      canCancelEvents: false,
-      scrollType: "vertical",
-      contentWidth: 880,
-      contentHeight: 'auto',
-      contentOffset: {
-        x: -250,
-        y: 0
-      },
-      showVerticalScrollIndicator: false,
-      showHorizontalScrollIndicator: false,
-      width: 'auto',
-      height: 'auto',
-      top: 0,
-      left: 0
-    });
-    window.add(scrollView);
     blueView = new (require("" + dir + "/Blue"))();
-    blueView.left = 260;
     blueView.visible = false;
-    scrollView.add(blueView);
+    window.add(blueView);
     redView = new (require("" + dir + "/Red"))();
-    redView.left = 260;
-    scrollView.add(redView);
-    setTimeout(function() {
-      return scrollView.scrollTo(260, 0);
-    }, 50);
-    dummyView = Ti.UI.createView({
-      width: 40,
-      height: 460,
-      left: 280,
-      zIndex: 20
-    });
+    window.add(redView);
     currentView = redView;
+    currentView.isOpened = false;
     _bubble = function(type, options, propagation, source) {
       window.fireEvent('bubble', {
         btype: type,
@@ -76,85 +49,95 @@ Window = (function() {
           nextView = blueView;
         }
         if (nextView === currentView) {
-          _hideMenu();
+          _toggleMenu('left', true);
         } else {
           _switchView(nextView);
         }
       } else if (e.btype === 'showMenu') {
-        if (offset > 200) {
-          _showMenu();
-        } else {
-          _hideMenu();
-        }
+        _toggleMenu('left', currentView.isOpened);
       } else if (e.btype === 'showDetail') {
-        if (offset < 500) {
-          _showDetail();
-        } else {
-          _hideDetail();
-        }
+        _toggleMenu('right', currentView.isOpened);
       }
       if (e.bpropagation) {
         _bubble(e.btype, e.boptions, true, e.source);
       }
     };
-    _showMenu = function() {
-      scrollView.scrollTo(0, 0);
-      window.add(dummyView);
-      scrollView.touchEnabled = false;
-    };
-    _hideMenu = function() {
-      window.remove(dummyView);
-      scrollView.touchEnabled = true;
-      scrollView.fireEvent('dragStart');
-      scrollView.scrollTo(260, 0);
+    _toggleMenu = function(direction, isOpened) {
+      var left;
+      if (direction === 'left') {
+        left = !isOpened && 260 || 0;
+      } else {
+        left = !isOpened && -260 || 0;
+      }
+      trace(isOpened);
+      currentView.animate(mix($$.animation, {
+        left: left
+      }), function() {
+        currentView.isOpened = !isOpened;
+      });
     };
     _switchView = function(nextView) {
-      scrollView.scrollTo(-60, 0);
-      setTimeout(function() {
-        currentView.visible = false;
+      var animation;
+      animation = {
+        left: 320,
+        curve: Ti.UI.iOS.ANIMATION_CURVE_EASE_OUT,
+        duration: 300
+      };
+      currentView.animate(animation, function() {
         nextView.visible = true;
-        _hideMenu();
-        return currentView = nextView;
-      }, 200);
+        currentView.visible = false;
+        nextView.animate(mix($$.animation, {
+          left: 0
+        }), function() {
+          currentView = nextView;
+          currentView.isOpened = false;
+        });
+      });
     };
-    _showDetail = function() {
-      scrollView.scrollTo(520, 0);
-      setTimeout(function() {
-        return scrollView.width = 60;
-      }, 300);
-    };
-    _hideDetail = function() {
-      scrollView.width = 320;
-      scrollView.scrollTo(260, 0);
-    };
-    scrollView.addEventListener('dragStart', function(e) {
-      scrollView.left = 0;
-      scrollView.width = 320;
+    currentView.addEventListener('touchstart', function(e) {
+      touchStartX = parseInt(e.x, 10);
     });
-    scrollView.addEventListener('dragEnd', function(e) {
-      if (offset < 200) {
-        scrollView.scrollTo(0, 0);
-        window.add(dummyView);
-        scrollView.touchEnabled = false;
-      } else if (offset < 500) {
-        scrollView.scrollTo(260, 0);
+    currentView.addEventListener('touchend', function(e) {
+      var isToggled;
+      touchStarted = false;
+      if (currentView.left < 0) {
+        if (currentView.left <= -140) {
+          currentView.animate(mix($$.animation, {
+            left: -260
+          }));
+          return currentView.isOpened = true;
+        } else {
+          currentView.animate(mix($$.animation, {
+            left: 0
+          }));
+          return isToggled = false;
+        }
       } else {
-        scrollView.scrollTo(520, 0);
-        scrollView.width = 60;
+        if (currentView.left >= 140) {
+          currentView.animate(mix($$.animation, {
+            left: 260
+          }));
+          return currentView.isOpened = true;
+        } else {
+          currentView.animate(mix($$.animation, {
+            left: 0
+          }));
+          return currentView.isOpened = false;
+        }
       }
     });
-    scrollView.addEventListener('scroll', function(e) {
-      offset = e.x;
-      if (offset < 280) {
-        menuView.width = 280;
-      } else {
-        menuView.width = 30;
+    currentView.addEventListener('touchmove', function(e) {
+      var newLeft, x;
+      x = parseInt(e.globalPoint.x, 10);
+      newLeft = x - touchStartX;
+      if (touchStarted) {
+        if (newLeft <= 150 && newLeft >= -150) {
+          currentView.left = newLeft;
+        }
       }
-    });
-    dummyView.addEventListener('touchmove', function(e) {
-      window.remove(dummyView);
-      scrollView.touchEnabled = true;
-      scrollView.fireEvent('dragStart');
+      if (newLeft > 30 || newLeft < -30) {
+        return touchStarted = true;
+      }
     });
     menuView.addEventListener('bubble', _catchBubble);
     detailView.addEventListener('bubble', _catchBubble);

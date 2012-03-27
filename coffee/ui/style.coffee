@@ -35,6 +35,11 @@ style =
     width: 60
     height: 30
     top: 10
+    
+  animation:
+    curve: Ti.UI.iOS.ANIMATION_CURVE_EASE_OUT
+    duration: 500
+    
 
 
         
