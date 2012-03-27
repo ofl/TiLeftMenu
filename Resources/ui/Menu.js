@@ -12,7 +12,7 @@ Menu = (function() {
     trace("start constructor");
     view = Ti.UI.createView({
       left: 0,
-      width: 290,
+      width: 320,
       height: 460,
       isShow: false
     });
@@ -24,16 +24,17 @@ Menu = (function() {
       var data, item, row, rows, _i, _len;
       data = [
         {
-          title: 'todo'
+          title: 'Red'
         }, {
-          title: 'setting'
+          title: 'Blue'
         }
       ];
       rows = [];
       for (_i = 0, _len = data.length; _i < _len; _i++) {
         item = data[_i];
         row = Ti.UI.createTableViewRow({
-          title: item.title
+          title: item.title,
+          color: '#fff'
         });
         rows.push(row);
       }

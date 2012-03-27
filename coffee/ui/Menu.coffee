@@ -1,7 +1,7 @@
 # Shortcuts
 
 dir =  'ui'
-mod =  "#{dir}/RightView"
+mod =  "#{dir}/LeftView"
 
 $$ = (require "#{dir}/style").style
 trace = (mes)-> Ti.API.info  "#{mod}:#{mes}"
@@ -15,13 +15,13 @@ class Menu
     # UI
 
     view = Ti.UI.createView 
-      left: 30
-      width: 290
+      left: 0
+      width: 320
       height: 460
       isShow: false
       
     tableView = Ti.UI.createTableView mix $$.tableView,
-      backgroundColor: '#fff'
+      backgroundColor: '#666'
     view.add tableView
     
 
@@ -30,13 +30,14 @@ class Menu
   
     refresh = ()->
       data = [
-        {title: 'todo'}
-        {title: 'setting'}        
+        {title: 'Red'}
+        {title: 'Blue'}        
       ]
       rows = []
       for item in data
         row = Ti.UI.createTableViewRow
           title: item.title
+          color: '#fff'
         rows.push row
       
       tableView.setData rows

@@ -7,7 +7,7 @@ $$ = (require "#{dir}/style").style
 trace = (mes)-> Ti.API.info  "#{mod}:#{mes}"
 mix = (require 'helpers/util').mix
 
-class Menu        
+class View        
   constructor: (tab)->
     trace "start constructor"
 
@@ -21,6 +21,16 @@ class Menu
       isShow: false
       backgroundColor: '#990000'
           
+    
+    leftBtn =  Ti.UI.createButton mix $$.menuBtn,
+      left: 10
+      title: 'Left'
+    view.add leftBtn
+    
+    rightBtn =  Ti.UI.createButton mix $$.menuBtn,
+      right: 10
+      title: 'Right'
+    view.add rightBtn
 
     # Functions  
     
@@ -39,6 +49,13 @@ class Menu
 
     # Event Listeners
       
+    leftBtn.addEventListener 'click', ()->
+      _bubble 'showMenu'
+      return
+      
+    rightBtn.addEventListener 'click', ()->
+      _bubble 'showDetail'
+      return
 
     # Disclose
       
@@ -49,4 +66,4 @@ class Menu
 
 trace "end load"
     
-module.exports = Menu
+module.exports = View

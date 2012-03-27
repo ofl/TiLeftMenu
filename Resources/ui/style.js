@@ -28,31 +28,10 @@ style = {
   tableViewRow: {
     color: theme.blackText
   },
-  addBtn: {
-    title: '+',
-    style: Ti.UI.iPhone.SystemButtonStyle.BORDERED
-  },
   menuBtn: {
-    width: 44,
-    style: Ti.UI.iPhone.SystemButtonStyle.BORDERED
-  },
-  editBtn: {
-    systemButton: Ti.UI.iPhone.SystemButton.EDIT
-  },
-  cancelBtn: {
-    systemButton: Ti.UI.iPhone.SystemButton.CANCEL
-  },
-  cameraBtn: {
-    systemButton: Ti.UI.iPhone.SystemButton.CAMERA
-  },
-  doneBtn: {
-    systemButton: Ti.UI.iPhone.SystemButton.DONE
-  },
-  trashBtn: {
-    systemButton: Ti.UI.iPhone.SystemButton.TRASH
-  },
-  fs: {
-    systemButton: Titanium.UI.iPhone.SystemButton.FLEXIBLE_SPACE
+    width: 60,
+    height: 30,
+    top: 10
   }
 };
 exports = {

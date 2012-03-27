@@ -8,11 +8,9 @@ trace = function(mes) {
 mix = (require('helpers/util')).mix;
 Window = (function() {
   function Window() {
-    var Z_INDEX_BOTTOM, Z_INDEX_TOP, currentView, dummyView, leftView, mainView1, mainView2, offset, rightView, scrollView, tab, tabGroup, window, _catchBubble, _hideMenu, _showMenu, _switchView;
+    var blueView, currentView, detailView, dummyView, menuView, offset, redView, scrollView, tab, tabGroup, window, _bubble, _catchBubble, _hideDetail, _hideMenu, _showDetail, _showMenu, _switchView;
     trace("start constructor");
     currentView = null;
-    Z_INDEX_TOP = 3;
-    Z_INDEX_BOTTOM = 0;
     offset = null;
     window = Ti.UI.createWindow($$.window);
     tab = Ti.UI.createTab({
@@ -21,11 +19,14 @@ Window = (function() {
     tabGroup = Ti.UI.createTabGroup({
       tabs: [tab]
     });
-    rightView = new (require("" + dir + "/RightView"))();
-    window.add(rightView);
-    leftView = new (require("" + dir + "/LeftView"))();
-    window.add(leftView);
+    detailView = new (require("" + dir + "/Detail"))();
+    detailView.refresh();
+    window.add(detailView);
+    menuView = new (require("" + dir + "/Menu"))();
+    menuView.refresh();
+    window.add(menuView);
     scrollView = Ti.UI.createScrollView({
+      canCancelEvents: false,
       scrollType: "vertical",
       contentWidth: 880,
       contentHeight: 'auto',
@@ -41,54 +42,55 @@ Window = (function() {
       left: 0
     });
     window.add(scrollView);
-    mainView2 = new (require("" + dir + "/MainView2"))();
-    mainView2.zIndex = Z_INDEX_BOTTOM;
-    mainView2.left = 260;
-    mainView2.visible = false;
-    scrollView.add(mainView2);
-    mainView1 = new (require("" + dir + "/MainView1"))();
-    mainView1.zIndex = Z_INDEX_BOTTOM;
-    mainView1.left = 260;
-    scrollView.add(mainView1);
+    blueView = new (require("" + dir + "/Blue"))();
+    blueView.left = 260;
+    blueView.visible = false;
+    scrollView.add(blueView);
+    redView = new (require("" + dir + "/Red"))();
+    redView.left = 260;
+    scrollView.add(redView);
+    setTimeout(function() {
+      return scrollView.scrollTo(260, 0);
+    }, 50);
     dummyView = Ti.UI.createView({
       width: 40,
       height: 460,
       left: 280,
       zIndex: 20
     });
-    currentView = mainView1;
+    currentView = redView;
+    _bubble = function(type, options, propagation, source) {
+      window.fireEvent('bubble', {
+        btype: type,
+        boptions: options || {},
+        bpropagation: propagation || true,
+        bsource: source || mod
+      });
+    };
     _catchBubble = function(e) {
-      var isOpenCamer, nextView;
-      if (e.btype === 'didSelect') {
-        _createTodo(e.boptions.created);
-      }
-      if (e.btype === 'closeNavGroup' || e.btype === 'closePallet') {
-        isOpenCamer = true;
-      }
-      if (e.btype === 'openPallet') {
-        isOpenCamer = false;
-      }
-      if (e.btype === 'didClickAddBtn') {
-        _add();
-      }
-      if (e.btype === 'didClickMenuBtn') {
-        _showMenu();
-      }
-      if (e.btype === 'didSelectTodo') {
-        window = new (require("" + dir + "/tags/Window"))();
-        window.refresh(e.boptions.id);
-        tab.open(window);
-      }
+      var nextView;
       if (e.btype === 'didSelectView') {
         if (e.boptions.index === 0) {
-          nextView = mainTable;
+          nextView = redView;
         } else {
-          nextView = settingView;
+          nextView = blueView;
         }
         if (nextView === currentView) {
           _hideMenu();
         } else {
           _switchView(nextView);
+        }
+      } else if (e.btype === 'showMenu') {
+        if (offset > 200) {
+          _showMenu();
+        } else {
+          _hideMenu();
+        }
+      } else if (e.btype === 'showDetail') {
+        if (offset < 500) {
+          _showDetail();
+        } else {
+          _hideDetail();
         }
       }
       if (e.bpropagation) {
@@ -96,50 +98,36 @@ Window = (function() {
       }
     };
     _showMenu = function() {
-      var animation, left;
-      menuView.refresh();
-      menuView.isShow = !menuView.isShow;
-      left = menuView.isShow ? 280 : 0;
-      animation = Ti.UI.createAnimation({
-        left: left,
-        duration: 350
-      });
-      currentView.animate(animation);
+      scrollView.scrollTo(0, 0);
+      window.add(dummyView);
+      scrollView.touchEnabled = false;
     };
     _hideMenu = function() {
-      var animation, left;
-      menuView.isShow = !menuView.isShow;
-      left = menuView.isShow ? 280 : 0;
-      animation = Ti.UI.createAnimation({
-        left: left,
-        duration: 350
-      });
-      currentView.animate(animation);
+      window.remove(dummyView);
+      scrollView.touchEnabled = true;
+      scrollView.fireEvent('dragStart');
+      scrollView.scrollTo(260, 0);
     };
     _switchView = function(nextView) {
-      var beHidden;
-      menuView.isShow = false;
-      beHidden = Ti.UI.createAnimation({
-        left: 320,
-        duration: 300
-      });
-      beHidden.addEventListener("complete", function() {
-        var beShown;
-        currentView.hide();
-        currentView.zIndex = Z_INDEX_BOTTOM;
-        nextView.show();
-        nextView.zIndex = Z_INDEX_TOP;
-        beShown = Ti.UI.createAnimation({
-          left: 0,
-          duration: 350
-        });
-        nextView.animate(beShown);
+      scrollView.scrollTo(-60, 0);
+      setTimeout(function() {
+        currentView.visible = false;
+        nextView.visible = true;
+        _hideMenu();
         return currentView = nextView;
-      });
-      currentView.animate(beHidden);
+      }, 200);
+    };
+    _showDetail = function() {
+      scrollView.scrollTo(520, 0);
+      setTimeout(function() {
+        return scrollView.width = 60;
+      }, 300);
+    };
+    _hideDetail = function() {
+      scrollView.width = 320;
+      scrollView.scrollTo(260, 0);
     };
     scrollView.addEventListener('dragStart', function(e) {
-      trace('ahooo');
       scrollView.left = 0;
       scrollView.width = 320;
     });
@@ -147,7 +135,6 @@ Window = (function() {
       if (offset < 200) {
         scrollView.scrollTo(0, 0);
         window.add(dummyView);
-        scrollView.canCancelEvents = false;
         scrollView.touchEnabled = false;
       } else if (offset < 500) {
         scrollView.scrollTo(260, 0);
@@ -156,32 +143,23 @@ Window = (function() {
         scrollView.width = 60;
       }
     });
+    scrollView.addEventListener('scroll', function(e) {
+      offset = e.x;
+      if (offset < 280) {
+        menuView.width = 280;
+      } else {
+        menuView.width = 30;
+      }
+    });
     dummyView.addEventListener('touchmove', function(e) {
-      trace('koko');
       window.remove(dummyView);
       scrollView.touchEnabled = true;
       scrollView.fireEvent('dragStart');
     });
-    mainView1.addEventListener('singletap', function(e) {
-      trace('koko');
-    });
-    scrollView.addEventListener('scroll', function(e) {
-      offset = e.x;
-      trace(offset);
-      if (offset < 150) {
-        leftView.visible = true;
-      } else if (offset < 280) {
-        leftView.width = 280;
-        leftView.visible = true;
-      } else {
-        leftView.width = 30;
-        leftView.visible = true;
-      }
-    });
-    leftView.addEventListener('bubble', _catchBubble);
-    rightView.addEventListener('bubble', _catchBubble);
-    mainView1.addEventListener('bubble', _catchBubble);
-    mainView2.addEventListener('bubble', _catchBubble);
+    menuView.addEventListener('bubble', _catchBubble);
+    detailView.addEventListener('bubble', _catchBubble);
+    redView.addEventListener('bubble', _catchBubble);
+    blueView.addEventListener('bubble', _catchBubble);
     trace("end constructor");
     return tabGroup;
   }

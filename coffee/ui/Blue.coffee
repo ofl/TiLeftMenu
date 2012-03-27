@@ -1,13 +1,13 @@
 # Shortcuts
 
 dir =  'ui'
-mod =  "#{dir}/LeftView"
+mod =  "#{dir}/Main2"
 
 $$ = (require "#{dir}/style").style
 trace = (mes)-> Ti.API.info  "#{mod}:#{mes}"
 mix = (require 'helpers/util').mix
 
-class Menu        
+class View        
   constructor: (tab)->
     trace "start constructor"
 
@@ -16,30 +16,27 @@ class Menu
 
     view = Ti.UI.createView 
       left: 0
-      width: 290
+      width: 320
       height: 460
       isShow: false
-      
-    tableView = Ti.UI.createTableView mix $$.tableView,
-      backgroundColor: '#666'
-    view.add tableView
+      backgroundColor: '#000099'
+          
     
+    leftBtn =  Ti.UI.createButton mix $$.menuBtn,
+      left: 10
+      title: 'Left'
+    view.add leftBtn
+    
+    rightBtn =  Ti.UI.createButton mix $$.menuBtn,
+      right: 10
+      title: 'Right'
+    view.add rightBtn
+          
 
     # Functions  
     
   
     refresh = ()->
-      data = [
-        {title: 'todo'}
-        {title: 'setting'}        
-      ]
-      rows = []
-      for item in data
-        row = Ti.UI.createTableViewRow
-          title: item.title
-        rows.push row
-      
-      tableView.setData rows
       return
      
     _bubble = (type, options, propagation, source)->
@@ -53,10 +50,14 @@ class Menu
 
     # Event Listeners
       
-    tableView.addEventListener 'click', (e)->
-      _bubble 'didSelectView', index: e.index
+    leftBtn.addEventListener 'click', ()->
+      _bubble 'showMenu'
       return
-
+      
+    rightBtn.addEventListener 'click', ()->
+      _bubble 'showDetail'
+      return
+      
 
     # Disclose
       
@@ -67,4 +68,4 @@ class Menu
 
 trace "end load"
     
-module.exports = Menu
+module.exports = View

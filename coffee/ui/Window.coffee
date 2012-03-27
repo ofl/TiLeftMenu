@@ -17,8 +17,6 @@ class Window
     # Local Variables
     
     currentView = null
-    Z_INDEX_TOP = 3
-    Z_INDEX_BOTTOM = 0
     
     offset = null
 
@@ -31,19 +29,21 @@ class Window
       window: window    
     tabGroup = Ti.UI.createTabGroup({tabs:[tab]})               
 
-
       
-    rightView = new (require "#{dir}/RightView")()
-    window.add rightView
+    detailView = new (require "#{dir}/Detail")()
+    detailView.refresh()
+    window.add detailView
       
-    leftView = new (require "#{dir}/LeftView")()
-    window.add leftView
+    menuView = new (require "#{dir}/Menu")()
+    menuView.refresh()
+    window.add menuView
 
     scrollView = Ti.UI.createScrollView
+      canCancelEvents: false
       scrollType: "vertical"
       contentWidth:880
       contentHeight:'auto'
-      contentOffset:{x:-250, y:0}
+      contentOffset:{x:-250, y:0} #この要素が作用しない
       showVerticalScrollIndicator:false
       showHorizontalScrollIndicator:false        
       width: 'auto'
@@ -52,119 +52,121 @@ class Window
       left: 0    
     window.add scrollView
     
-    mainView2 = new (require "#{dir}/MainView2")()
-    mainView2.zIndex = Z_INDEX_BOTTOM
-    mainView2.left = 260
-    mainView2.visible = false
-    scrollView.add mainView2
+    blueView = new (require "#{dir}/Blue")()
+    blueView.left = 260 #scrollViewにおけるoffset
+    blueView.visible = false
+    scrollView.add blueView
     
-    mainView1 = new (require "#{dir}/MainView1")()
-    mainView1.zIndex = Z_INDEX_BOTTOM
-    mainView1.left = 260
-    scrollView.add mainView1
+    redView = new (require "#{dir}/Red")()
+    redView.left = 260
+    scrollView.add redView
+    
+    setTimeout ()->
+      scrollView.scrollTo 260, 0 #contentOffsetが作用しないため起動時にスクロール
+    , 50
 
-    dummyView = Ti.UI.createView
+
+#左側のmenuが表示されているときにscrollViewのtouchEnableをfalseしないとmenuを押すことができない。
+#しかし逆にscrollViewをタッチできなくすると今度はそちらを操作したい時に反応してくれない。
+#そのためmenuが表示された時にダミーのviewをaddしてviewに対してtouchmoveされるとscrollViewのtouchEnableをtrueという無理やりな実装
+#当然ながら、あまりうまくいっていない。
+
+    dummyView = Ti.UI.createView 
       width: 40
       height: 460
       left: 280
       zIndex:20
     
-    # sh.Shadow mainView1, 
+    # sh.Shadow redView, 
       # shadowRadius: 2
       # shadowOpacity: 0.6
       # shadowOffset: {x: -5, y: 5}    
 
-    currentView = mainView1    
+    currentView = redView  #現在のview。Red or Blue
 
 
     # Functions  
+     
+    _bubble = (type, options, propagation, source)->
+      window.fireEvent 'bubble',
+        btype: type
+        boptions: options || {}
+        bpropagation: propagation || true
+        bsource: source || mod
+      return
     
     _catchBubble = (e)->
-      if e.btype is 'didSelect'
-        _createTodo e.boptions.created
-      if e.btype is 'closeNavGroup' or e.btype is 'closePallet'
-        isOpenCamer = true
-      if e.btype is 'openPallet'
-        isOpenCamer = false
-      if e.btype is 'didClickAddBtn'
-        _add()
-      if e.btype is 'didClickMenuBtn'
-        _showMenu()
-      if e.btype is 'didSelectTodo'
-        window = new (require "#{dir}/tags/Window")()
-        window.refresh e.boptions.id
-        tab.open window
       if e.btype is 'didSelectView'
         if e.boptions.index is 0
-          nextView = mainTable
+          nextView = redView
         else
-          nextView = settingView
+          nextView = blueView
         if nextView is currentView
           _hideMenu()
         else
           _switchView nextView
+      else if e.btype is 'showMenu'
+        if offset > 200
+          _showMenu()
+        else      
+          _hideMenu()
+      else if e.btype is 'showDetail'
+        if offset < 500
+          _showDetail()
+        else
+          _hideDetail()
+          
       if e.bpropagation
         _bubble e.btype, e.boptions, true, e.source
       return
-    
-
-
       
     _showMenu = ()->
-      menuView.refresh()
-      menuView.isShow = ! menuView.isShow
-      left = if menuView.isShow then 280 else 0
-      animation = Ti.UI.createAnimation left: left, duration: 350
-      currentView.animate animation
+      scrollView.scrollTo 0,0
+      window.add dummyView
+      scrollView.touchEnabled = false     
       return
       
     _hideMenu = ()->
-      menuView.isShow = ! menuView.isShow
-      left = if menuView.isShow then 280 else 0
-      animation = Ti.UI.createAnimation left: left, duration: 350
-      currentView.animate animation
+      window.remove dummyView
+      scrollView.touchEnabled = true
+      scrollView.fireEvent 'dragStart'
+      scrollView.scrollTo 260,0
       return
       
     _switchView = (nextView)->
-      menuView.isShow = false;
-      beHidden = Ti.UI.createAnimation left: 320, duration: 300
-      beHidden.addEventListener "complete", ()->
-        currentView.hide()
-        currentView.zIndex = Z_INDEX_BOTTOM
-        nextView.show()
-        nextView.zIndex = Z_INDEX_TOP
-        beShown =  Ti.UI.createAnimation left: 0, duration: 350
-        nextView.animate beShown
+      scrollView.scrollTo -60,0
+      setTimeout ()->
+        currentView.visible = false
+        nextView.visible = true
+        _hideMenu()
         currentView = nextView
-      currentView.animate beHidden
+      , 200
       return
       
+    _showDetail = ()->
+      scrollView.scrollTo 520,0
+      setTimeout ()->
+        scrollView.width = 60
+      , 300
+      return      
+      
+    _hideDetail = ()->
+      scrollView.width = 320
+      scrollView.scrollTo 260,0
+      return      
 
     # Event Listeners
       
     scrollView.addEventListener 'dragStart', (e)->
-      trace 'ahooo'
-      # scrollView.contentWidth = 860
-      # mainView1.left = 250
-      # rightView.zIndex = 3
-      # rightView.width = 320
       scrollView.left = 0
       scrollView.width = 320
       return
       
     scrollView.addEventListener 'dragEnd', (e)->
-      # scrollView.contentWidth -=  offset
-      # mainView1.left = 0
-      
       if offset <200
         scrollView.scrollTo 0,0
         window.add dummyView
-        scrollView.canCancelEvents = false
         scrollView.touchEnabled = false
-        # setTimeout ()->
-          # rightView.width = 250
-          # rightView.zIndex = 15
-        # , 400
       else if offset < 500
         scrollView.scrollTo 260,0
       else
@@ -172,41 +174,25 @@ class Window
         scrollView.width = 60
       return
       
+    scrollView.addEventListener 'scroll', (e)->
+      offset = e.x
+      if offset < 280
+        menuView.width = 280
+      else
+        menuView.width = 30
+      return
+      
     dummyView.addEventListener 'touchmove', (e)->
-      trace 'koko'
       window.remove dummyView
       scrollView.touchEnabled = true
       scrollView.fireEvent 'dragStart'
       return
 
-    mainView1.addEventListener 'singletap', (e)->
-      trace 'koko'
-      return
-
       
-    scrollView.addEventListener 'scroll', (e)->
-      offset = e.x
-      trace offset
-      if offset < 150
-        # leftView.visible = true
-        # rightView.visible = false
-        # leftView.width = 320 - offset
-        leftView.visible = true
-      else if offset < 280
-        leftView.width = 280
-        leftView.visible = true
-      else
-        leftView.width = 30
-        leftView.visible = true
-        # leftView.visible = false
-        # rightView.visible = true
-        # leftView.visible = false
-      return
-      
-    leftView.addEventListener 'bubble', _catchBubble
-    rightView.addEventListener 'bubble', _catchBubble
-    mainView1.addEventListener 'bubble', _catchBubble
-    mainView2.addEventListener 'bubble', _catchBubble
+    menuView.addEventListener 'bubble', _catchBubble
+    detailView.addEventListener 'bubble', _catchBubble
+    redView.addEventListener 'bubble', _catchBubble
+    blueView.addEventListener 'bubble', _catchBubble
 
     # Disclose
     

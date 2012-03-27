@@ -1,13 +1,13 @@
 # Shortcuts
 
 dir =  'ui'
-mod =  "#{dir}/Main2"
+mod =  "#{dir}/RightView"
 
 $$ = (require "#{dir}/style").style
 trace = (mes)-> Ti.API.info  "#{mod}:#{mes}"
 mix = (require 'helpers/util').mix
 
-class Menu        
+class Detail        
   constructor: (tab)->
     trace "start constructor"
 
@@ -15,17 +15,32 @@ class Menu
     # UI
 
     view = Ti.UI.createView 
-      left: 0
-      width: 320
+      left: 30
+      width: 290
       height: 460
       isShow: false
-      backgroundColor: '#000099'
-          
+      
+    tableView = Ti.UI.createTableView mix $$.tableView,
+      backgroundColor: '#ffc'
+    view.add tableView
+    
 
     # Functions  
     
   
     refresh = ()->
+      data = [
+        {title: 'gagaga'}
+        {title: 'gogogog'}        
+      ]
+      rows = []
+      for item in data
+        row = Ti.UI.createTableViewRow
+          title: item.title
+          indentionLevel: 3
+        rows.push row
+      
+      tableView.setData rows
       return
      
     _bubble = (type, options, propagation, source)->
@@ -39,6 +54,10 @@ class Menu
 
     # Event Listeners
       
+    # tableView.addEventListener 'click', (e)->
+      # _bubble 'didSelectView', index: e.index
+      # return
+
 
     # Disclose
       
@@ -49,4 +68,4 @@ class Menu
 
 trace "end load"
     
-module.exports = Menu
+module.exports = Detail
