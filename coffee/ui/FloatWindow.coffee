@@ -47,7 +47,7 @@ class Window
       window.fireEvent 'bubble',
         btype: type
         boptions: options || {}
-        bpropagation: propagation || true
+        bpropagation: typeof propagation == 'undefined' && true || propagation
         bsource: source || mod
       return
     

@@ -53,7 +53,7 @@ class Window
       window.fireEvent 'bubble',
         btype: type
         boptions: options || {}
-        bpropagation: propagation || true
+        bpropagation: typeof propagation == 'undefined' && true || propagation
         bsource: source || mod
       return
     
@@ -73,7 +73,7 @@ class Window
         _toggleMenu 'right', floatWindow.isOpened
           
       if e.bpropagation
-        _bubble e.btype, e.boptions, true, e.source
+        _bubble e.btype, e.boptions, true, e.bsource
       return
       
     _toggleMenu = (direction, isOpened)->
