@@ -20,10 +20,20 @@ style =
     
   window: 
     tabBarHidden: true
-    navBarHidden: true
+    navBarHidden: false
     barColor: theme.barColor
     backgroundColor: theme.background
     orientationModes:  [Ti.UI.PORTRAIT]  
+    width: 320
+    height: Ti.UI.FILL
+    
+  tab:
+    width: 320
+    height: Ti.UI.FILL
+    
+  tabGroup:
+    width: 320
+    height: Ti.UI.FILL
   
   tableView: 
     backgroundColor: theme.background
@@ -32,9 +42,8 @@ style =
     color: theme.blackText
   
   menuBtn: 
-    width: 60
-    height: 30
-    top: 10
+    style: Ti.UI.iPhone.SystemButtonStyle.BORDERED
+    title: 'Menu'
     
   animation:
     curve: Ti.UI.iOS.ANIMATION_CURVE_EASE_OUT
@@ -44,5 +53,6 @@ style =
 
         
 exports = style: style
+
 
   

@@ -1,71 +1,78 @@
 # Shortcuts
 
 dir =  'ui'
-mod =  "#{dir}/Detail"
+mod =  "#{dir}/menu/BaseWindow"
 
 $$ = (require "#{dir}/style").style
 trace = (mes)-> Ti.API.info  "#{mod}:#{mes}"
 mix = (require 'helpers/util').mix
 
-class Detail        
-  constructor: (tab)->
+# sh = require 'com.infinery.ds'
+
+class BaseWindow        
+  constructor: ()->
     trace "start constructor"
-
-
+    
+    # Local Variables
+    
+    color = 'red'
+    
     # UI
 
-    view = Ti.UI.createView 
-      left: 30
-      width: 290
-      height: 460
-      isShow: false
-      
-    tableView = Ti.UI.createTableView mix $$.tableView,
-      backgroundColor: '#ffc'
-    view.add tableView
-    
+    window = Ti.UI.createWindow mix $$.window,
+      navBarHidden: false
+      zIndex = 1
+      visible: false
 
+    tableView = Ti.UI.createTableView mix $$.tableView,
+      backgroundColor: '#333'
+    window.add tableView
+
+            
+    
     # Functions  
     
-  
     refresh = ()->
+      # window.visible = true
+      
       data = [
-        {title: 'gagaga'}
-        {title: 'gogogog'}        
+        {title: 'Red'}
+        {title: 'Blue'}        
       ]
       rows = []
       for item in data
         row = Ti.UI.createTableViewRow
           title: item.title
-          indentionLevel: 3
+          color: '#fff'
+          height: 40
         rows.push row
       
       tableView.setData rows
       return
-     
+           
     _bubble = (type, options, propagation, source)->
-      view.fireEvent 'bubble',
+      window.fireEvent 'bubble',
         btype: type
         boptions: options || {}
         bpropagation: typeof propagation == 'undefined' && true || propagation
         bsource: source || mod
       return
-
+          
 
     # Event Listeners
       
-    # tableView.addEventListener 'click', (e)->
-      # _bubble 'didSelectView', index: e.index
-      # return
-
-
+    tableView.addEventListener 'click', (e)->
+      _bubble 'didSelectView', index: e.index
+      return
+    
     # Disclose
-      
-    view.refresh = refresh
+    
+    window.refresh = refresh
     
     trace "end constructor"
-    return view
+    return window
 
 trace "end load"
     
-module.exports = Detail
+module.exports = BaseWindow
+
