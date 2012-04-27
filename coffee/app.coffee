@@ -1,4 +1,4 @@
 do ->
-  win = new (require 'ui/TabGroup')()
-  win.open()
+  tabGroup = new (require 'ui/TabGroup')()
+  tabGroup.open()
   return

@@ -28,23 +28,20 @@ class BaseWindow
       backgroundColor: '#333'
     window.add tableView
 
-            
+         
     
     # Functions  
     
-    refresh = ()->
+    refresh = (pages)->
       # window.visible = true
-      
-      data = [
-        {title: 'Red'}
-        {title: 'Blue'}        
-      ]
+          
       rows = []
-      for item in data
+      for item in pages
         row = Ti.UI.createTableViewRow
           title: item.title
           color: '#fff'
           height: 40
+        
         rows.push row
       
       tableView.setData rows
@@ -62,7 +59,7 @@ class BaseWindow
     # Event Listeners
       
     tableView.addEventListener 'click', (e)->
-      _bubble 'didSelectView', index: e.index
+      _bubble 'didSelectView', {index: e.index}
       return
     
     # Disclose

@@ -1,6 +1,6 @@
 # Shortcuts
 
-dir =  'ui/blue'
+dir =  'ui/yellow'
 mod =  "#{dir}/Window"
 
 $$ = (require "#{dir}/style").style
@@ -15,24 +15,17 @@ class Window
     # UI
 
     window = Ti.UI.createWindow mix $$.window,
-      title: "Blue"
-      backgroundColor: 'blue'
+      title: "Yellow"
+      backgroundColor: 'yellow'
 
     menuBtn =  Ti.UI.createButton $$.menuBtn
     window.setLeftNavButton menuBtn
+      
 
-    label = Ti.UI.createLabel
-      right: 20
-      width: 100
-      height: 200 
-      font:{fontSize:128}
-    window.add label
-          
-
-    # Functions      
- 
-    refresh = (option)->
-      label.text = option.name
+    # Functions  
+    
+  
+    refresh = ()->
       return
      
     _bubble = (type, options, propagation, source)->
