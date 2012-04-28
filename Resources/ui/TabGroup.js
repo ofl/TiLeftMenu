@@ -8,7 +8,7 @@ trace = function(mes) {
 mix = (require('helpers/util')).mix;
 TabGroup = (function() {
   function TabGroup() {
-    var currentPage, isOpen, maskView, menuWindow, offsetWidth, pages, refresh, tabGroup, touchStartX, touchStarted, _addWindow, _catchBubble, _removeWindow, _switchWindow, _toggleMenu, _touchHandler;
+    var index, maskView, menuWindow, offsetWidth, pages, tabGroup, tabs, touchStartX, touchStarted, _addWindowEvent, _catchBubble, _switchWindow, _toggleOpenMenu, _touchHandler;
     trace("start constructor");
     pages = [
       {
@@ -33,16 +33,18 @@ TabGroup = (function() {
         option: {}
       }
     ];
-    currentPage = 0;
     offsetWidth = 260;
-    isOpen = false;
+    tabs = {};
+    index = 0;
     touchStartX = 0;
     touchStarted = false;
+    tabs[pages[index].dir] = Ti.UI.createTab($$.tab);
     tabGroup = Ti.UI.createTabGroup(mix($$.tabGroup, {
-      tabs: [Ti.UI.createTab($$.tab)],
-      zIndex: 10
+      tabs: [tabs[pages[index].dir]],
+      zIndex: 10,
+      left: 0
     }));
-    tabGroup.tabs[0].window = new (require("" + dir + "/" + pages[currentPage].dir + "/Window"))(tabGroup.tabs[0]);
+    tabs[pages[index].dir].window = new (require("" + dir + "/" + pages[index].dir + "/Window"))(tabs[pages[index].dir]);
     menuWindow = new (require("" + dir + "/menu/Window"))();
     menuWindow.open();
     maskView = Ti.UI.createView({
@@ -51,65 +53,61 @@ TabGroup = (function() {
       zIndex: 100,
       visible: false
     });
-    refresh = function() {
-      _addWindow();
-      tabGroup.tabs[0].window.refresh();
-    };
     _catchBubble = function(e) {
-      var nextPage;
+      var nextIndex;
       switch (e.btype) {
         case 'showMenu':
-          _toggleMenu('left', isOpen);
+          _toggleOpenMenu();
           maskView.visible = true;
           break;
-        case 'didSelectView':
-          nextPage = e.boptions.index;
-          if (nextPage === currentPage) {
-            _toggleMenu('left', true);
-          } else if (pages[nextPage].dir === pages[currentPage].dir) {
-            tabGroup.tabs[0].window.refresh(pages[nextPage].option);
-            _toggleMenu('left', true);
-            currentPage = nextPage;
+        case 'didSelectMenu':
+          nextIndex = e.boptions.index;
+          if (nextIndex === index) {
+            _toggleOpenMenu(true);
+          } else if (pages[nextIndex].dir === pages[index].dir) {
+            tabs[pages[nextIndex].dir].window.refresh(pages[nextIndex].option);
+            _toggleOpenMenu(true);
+            index = nextIndex;
           } else {
-            _switchWindow(nextPage);
+            _switchWindow(nextIndex);
           }
           maskView.visible = false;
       }
     };
-    _toggleMenu = function(direction, isOpen) {
+    _toggleOpenMenu = function() {
       var left;
-      if (direction === 'left') {
-        left = !isOpen && offsetWidth || 0;
-      } else {
-        left = !isOpen && -offsetWidth || 0;
-      }
+      left = tabGroup.left < 100 ? offsetWidth : 0;
       tabGroup.animate(mix($$.animation, {
         left: left
       }), function() {
-        isOpen = !isOpen;
+        tabGroup.left = left;
       });
     };
-    _switchWindow = function(nextPage) {
-      var animation;
-      animation = {
+    _switchWindow = function(nextIndex) {
+      var a;
+      a = {
         left: 320,
         curve: Ti.UI.iOS.ANIMATION_CURVE_EASE_OUT,
         duration: 300
       };
-      tabGroup.animate(animation, function() {
-        var tab;
-        _removeWindow();
-        tab = Ti.UI.createTab($$.tab);
-        tab.window = new (require("" + dir + "/" + pages[nextPage].dir + "/Window"))(tab);
-        tab.window.refresh(pages[nextPage].option);
-        tabGroup.setTabs([tab]);
-        _addWindow();
-        tabGroup.setActiveTab(tab);
+      tabGroup.animate(a, function() {
+        var d;
+        tabs[pages[index].dir].window.remove(maskView);
+        d = pages[nextIndex].dir;
+        if (typeof tabs[d] === 'undefined') {
+          tabs[d] = Ti.UI.createTab($$.tab);
+          tabs[d].window = new (require("" + dir + "/" + pages[nextIndex].dir + "/Window"))(tabs[d]);
+          tabs[d].window.refresh(pages[nextIndex].option);
+          tabGroup.addTab(tabs[d]);
+          _addWindowEvent(nextIndex);
+        }
+        tabs[d].window.add(maskView);
+        tabGroup.setActiveTab(tabs[d]);
         tabGroup.animate(mix($$.animation, {
           left: 0
         }), function() {
-          currentPage = nextPage;
-          isOpen = false;
+          index = nextIndex;
+          tabGroup.left = 0;
         });
       });
     };
@@ -140,44 +138,33 @@ TabGroup = (function() {
               left: offsetWidth
             }), function() {
               maskView.visible = true;
-              return isOpen = true;
+              tabGroup.left = offsetWidth;
             });
           } else {
             tabGroup.animate(mix($$.animation, {
               left: 0
             }), function() {
-              isOpen = false;
-              return maskView.visible = false;
+              maskView.visible = false;
+              tabGroup.left = 0;
             });
           }
       }
     };
-    _addWindow = function() {
+    _addWindowEvent = function(idx) {
       var w;
-      w = tabGroup.tabs[0].window;
-      w.add(maskView);
+      w = tabs[pages[idx].dir].window;
       w.addEventListener('bubble', _catchBubble);
       w.addEventListener('touchstart', _touchHandler);
       w.addEventListener('touchmove', _touchHandler);
       w.addEventListener('touchend', _touchHandler);
-    };
-    _removeWindow = function() {
-      var w;
-      w = tabGroup.tabs[0].window;
-      w.remove(maskView);
-      w.removeEventListener('bubble', _catchBubble);
-      w.removeEventListener('touchstart', _touchHandler);
-      w.removeEventListener('touchmove', _touchHandler);
-      w.removeEventListener('touchend', _touchHandler);
     };
     menuWindow.addEventListener('bubble', _catchBubble);
     tabGroup.addEventListener('open', function() {
       menuWindow.refresh(pages);
       menuWindow.visible = true;
     });
-    tabGroup.refresh = refresh;
-    _addWindow();
-    tabGroup.tabs[0].window.refresh();
+    _addWindowEvent(index);
+    tabs[pages[index].dir].window.refresh();
     trace("end constructor");
     return tabGroup;
   }

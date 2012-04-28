@@ -59,7 +59,7 @@ class BaseWindow
     # Event Listeners
       
     tableView.addEventListener 'click', (e)->
-      _bubble 'didSelectView', {index: e.index}
+      _bubble 'didSelectMenu', {index: e.index}
       return
     
     # Disclose

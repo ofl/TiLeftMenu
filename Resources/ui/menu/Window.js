@@ -20,18 +20,11 @@ BaseWindow = (function() {
       backgroundColor: '#333'
     }));
     window.add(tableView);
-    refresh = function() {
-      var data, item, row, rows, _i, _len;
-      data = [
-        {
-          title: 'Red'
-        }, {
-          title: 'Blue'
-        }
-      ];
+    refresh = function(pages) {
+      var item, row, rows, _i, _len;
       rows = [];
-      for (_i = 0, _len = data.length; _i < _len; _i++) {
-        item = data[_i];
+      for (_i = 0, _len = pages.length; _i < _len; _i++) {
+        item = pages[_i];
         row = Ti.UI.createTableViewRow({
           title: item.title,
           color: '#fff',
@@ -50,7 +43,7 @@ BaseWindow = (function() {
       });
     };
     tableView.addEventListener('click', function(e) {
-      _bubble('didSelectView', {
+      _bubble('didSelectMenu', {
         index: e.index
       });
     });

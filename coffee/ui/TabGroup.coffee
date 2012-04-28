@@ -11,30 +11,32 @@ mix = (require 'helpers/util').mix
 
 class TabGroup        
   constructor: ()->
-    trace "start constructor"
+    trace "start constructor"    
     
-    # Local Variables
-    
+    #configuration
     pages = [
       {title: 'Red', dir: 'red', option:{}}
       {title: 'Blue(A)', dir: 'blue', option:{name:'A'}}        
       {title: 'Blue(B)', dir: 'blue', option:{name:'B'}}        
       {title: 'Yellow', dir: 'yellow', option:{}}        
     ]    
-    
-    currentPage = 0
     offsetWidth = 260
     
-    isOpen = false
+    # Local Variables
+    
+    tabs = {}   #tabs['red'], tabs['blue']
+    index = 0    
     touchStartX = 0
     touchStarted = false
     
     # UI
-
+    
+    tabs[pages[index].dir] = Ti.UI.createTab $$.tab
     tabGroup = Ti.UI.createTabGroup mix $$.tabGroup,
-      tabs: [Ti.UI.createTab $$.tab]
+      tabs: [tabs[pages[index].dir]]
       zIndex: 10         
-    tabGroup.tabs[0].window = new (require "#{dir}/#{pages[currentPage].dir}/Window")(tabGroup.tabs[0])
+      left: 0
+    tabs[pages[index].dir].window = new (require "#{dir}/#{pages[index].dir}/Window")(tabs[pages[index].dir])
     
     menuWindow = new (require "#{dir}/menu/Window")()
     menuWindow.open()
@@ -54,59 +56,52 @@ class TabGroup
 
     # Functions  
     
-    refresh = ()->
-      _addWindow()
-      tabGroup.tabs[0].window.refresh()
-      return
-     
     _catchBubble = (e)->
       switch e.btype        
         when 'showMenu'
-          _toggleMenu 'left', isOpen
+          _toggleOpenMenu()
           maskView.visible = true
 
-        when 'didSelectView'
-          nextPage = e.boptions.index
-          if nextPage is currentPage
-            _toggleMenu 'left', true
-          else if pages[nextPage].dir is pages[currentPage].dir
-            tabGroup.tabs[0].window.refresh pages[nextPage].option
-            _toggleMenu 'left', true          
-            currentPage = nextPage
+        when 'didSelectMenu'
+          nextIndex = e.boptions.index
+          if nextIndex is index
+            _toggleOpenMenu true
+          else if pages[nextIndex].dir is pages[index].dir
+            tabs[pages[nextIndex].dir].window.refresh pages[nextIndex].option
+            _toggleOpenMenu true          
+            index = nextIndex
           else
-            _switchWindow nextPage
+            _switchWindow nextIndex
           maskView.visible = false          
       return
       
-    _toggleMenu = (direction, isOpen)->
-      if direction is 'left'
-        left = !isOpen && offsetWidth || 0
-      else
-        left = !isOpen && -offsetWidth || 0
-        
-      tabGroup.animate mix($$.animation, left: left)
-        , ()->
-          isOpen = !isOpen
-          return
+    _toggleOpenMenu = ()->
+      left = if tabGroup.left < 100 then offsetWidth else 0
+      tabGroup.animate mix($$.animation, left: left), ()->
+        tabGroup.left = left        
+        return
       return
       
-    _switchWindow = (nextPage)->
-      animation = 
+    _switchWindow = (nextIndex)->
+      a = 
         left: 320
         curve: Ti.UI.iOS.ANIMATION_CURVE_EASE_OUT
         duration: 300
         
-      tabGroup.animate animation, ()->
-        _removeWindow()
-        tab = Ti.UI.createTab $$.tab
-        tab.window = new (require "#{dir}/#{pages[nextPage].dir}/Window")(tab)
-        tab.window.refresh pages[nextPage].option
-        tabGroup.setTabs [tab]
-        _addWindow()
-        tabGroup.setActiveTab tab
+      tabGroup.animate a, ()->
+        tabs[pages[index].dir].window.remove maskView
+        d = pages[nextIndex].dir
+        if typeof tabs[d] is 'undefined'        
+          tabs[d] = Ti.UI.createTab $$.tab
+          tabs[d].window = new (require "#{dir}/#{pages[nextIndex].dir}/Window")(tabs[d])
+          tabs[d].window.refresh pages[nextIndex].option
+          tabGroup.addTab tabs[d]
+          _addWindowEvent nextIndex
+        tabs[d].window.add maskView           
+        tabGroup.setActiveTab tabs[d]
         tabGroup.animate mix($$.animation, left: 0), ()->
-          currentPage = nextPage
-          isOpen = false
+          index = nextIndex
+          tabGroup.left = 0
           return
         return
       return
@@ -131,29 +126,21 @@ class TabGroup
           if  tabGroup.left >= 140 
             tabGroup.animate mix($$.animation, left: offsetWidth), ()->
               maskView.visible = true
-              isOpen = true
+              tabGroup.left = offsetWidth
+              return
           else
             tabGroup.animate mix($$.animation, left: 0), ()->
-              isOpen = false 
               maskView.visible = false
+              tabGroup.left = 0
+              return
       return
 
-    _addWindow = ()->
-      w = tabGroup.tabs[0].window
-      w.add maskView 
+    _addWindowEvent = (idx)->
+      w = tabs[pages[idx].dir].window
       w.addEventListener 'bubble', _catchBubble
       w.addEventListener 'touchstart', _touchHandler
       w.addEventListener 'touchmove', _touchHandler
       w.addEventListener 'touchend', _touchHandler
-      return
-
-    _removeWindow = ()->
-      w = tabGroup.tabs[0].window
-      w.remove maskView 
-      w.removeEventListener 'bubble', _catchBubble
-      w.removeEventListener 'touchstart', _touchHandler
-      w.removeEventListener 'touchmove', _touchHandler
-      w.removeEventListener 'touchend', _touchHandler
       return
 
     # Event Listeners      
@@ -168,11 +155,9 @@ class TabGroup
 
     # Disclose
     
-    tabGroup.refresh = refresh
-    
     # Load
-    _addWindow()
-    tabGroup.tabs[0].window.refresh()
+    _addWindowEvent index
+    tabs[pages[index].dir].window.refresh()
 
     
     trace "end constructor"

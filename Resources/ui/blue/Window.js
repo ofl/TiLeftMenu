@@ -8,7 +8,7 @@ trace = function(mes) {
 mix = (require('helpers/util')).mix;
 Window = (function() {
   function Window(tab) {
-    var menuBtn, refresh, window, _bubble;
+    var label, menuBtn, refresh, window, _bubble;
     trace("start constructor");
     window = Ti.UI.createWindow(mix($$.window, {
       title: "Blue",
@@ -16,7 +16,18 @@ Window = (function() {
     }));
     menuBtn = Ti.UI.createButton($$.menuBtn);
     window.setLeftNavButton(menuBtn);
-    refresh = function() {};
+    label = Ti.UI.createLabel({
+      right: 20,
+      width: 100,
+      height: 200,
+      font: {
+        fontSize: 128
+      }
+    });
+    window.add(label);
+    refresh = function(option) {
+      label.text = option.name;
+    };
     _bubble = function(type, options, propagation, source) {
       window.fireEvent('bubble', {
         btype: type,

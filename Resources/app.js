@@ -1,5 +1,5 @@
 (function() {
-  var win;
-  win = new (require('ui/TabGroup'))();
-  win.open();
+  var tabGroup;
+  tabGroup = new (require('ui/TabGroup'))();
+  tabGroup.open();
 })();
