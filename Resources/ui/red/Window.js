@@ -43,12 +43,16 @@ Window = (function() {
       });
     };
     menuBtn.addEventListener('click', function(e) {
+      button.touchEnabled = false;
       _bubble('showMenu');
     });
     button.addEventListener('click', function(e) {
       var win;
       win = new (require("" + dir + "/red2/Window"))(tab);
       tab.open(win);
+    });
+    window.addEventListener('menuDidClosed', function(e) {
+      button.touchEnabled = true;
     });
     window.refresh = refresh;
     trace("end constructor");

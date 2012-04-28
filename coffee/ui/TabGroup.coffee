@@ -41,13 +41,6 @@ class TabGroup
     menuWindow = new (require "#{dir}/menu/Window")()
     menuWindow.open()
 
-    maskView = Ti.UI.createView
-      width: Ti.UI.FILL
-      height: Ti.UI.FILL
-      zIndex: 100
-      visible: false    
-
-    
     # sh.Shadow tabGroup, 
       # shadowRadius: 2
       # shadowOpacity: 0.6
@@ -60,7 +53,6 @@ class TabGroup
       switch e.btype        
         when 'showMenu'
           _toggleOpenMenu()
-          maskView.visible = true
 
         when 'didSelectMenu'
           nextIndex = e.boptions.index
@@ -72,13 +64,15 @@ class TabGroup
             index = nextIndex
           else
             _switchWindow nextIndex
-          maskView.visible = false          
+          _menuDidClosed()            
       return
       
     _toggleOpenMenu = ()->
       left = if tabGroup.left < 100 then offsetWidth else 0
       tabGroup.animate mix($$.animation, left: left), ()->
-        tabGroup.left = left        
+        tabGroup.left = left
+        if left is 0        
+          _menuDidClosed()        
         return
       return
       
@@ -89,7 +83,6 @@ class TabGroup
         duration: 300
         
       tabGroup.animate a, ()->
-        tabs[pages[index].dir].window.remove maskView
         d = pages[nextIndex].dir
         if typeof tabs[d] is 'undefined'        
           tabs[d] = Ti.UI.createTab $$.tab
@@ -97,7 +90,6 @@ class TabGroup
           tabs[d].window.refresh pages[nextIndex].option
           tabGroup.addTab tabs[d]
           _addWindowEvent nextIndex
-        tabs[d].window.add maskView           
         tabGroup.setActiveTab tabs[d]
         tabGroup.animate mix($$.animation, left: 0), ()->
           index = nextIndex
@@ -125,14 +117,17 @@ class TabGroup
           touchStarted = false
           if  tabGroup.left >= 140 
             tabGroup.animate mix($$.animation, left: offsetWidth), ()->
-              maskView.visible = true
               tabGroup.left = offsetWidth
               return
           else
             tabGroup.animate mix($$.animation, left: 0), ()->
-              maskView.visible = false
               tabGroup.left = 0
+              _menuDidClosed()
               return
+      return
+      
+    _menuDidClosed = ()->
+      tabs[pages[index].dir].window.fireEvent 'menuDidClosed'
       return
 
     _addWindowEvent = (idx)->

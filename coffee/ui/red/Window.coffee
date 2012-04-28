@@ -54,14 +54,17 @@ class Window
     # Event Listeners
       
     menuBtn.addEventListener 'click', (e)->
+      button.touchEnabled = false
       _bubble 'showMenu'
-      # window.touchEnabled = false
-      # tab.touchEnabled = false
       return
 
     button.addEventListener 'click', (e)->
       win = new (require "#{dir}/red2/Window")(tab)
       tab.open win
+      return
+
+    window.addEventListener 'menuDidClosed', (e) -> 
+      button.touchEnabled = true
       return
 
 

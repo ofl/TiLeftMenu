@@ -8,7 +8,7 @@ trace = function(mes) {
 mix = (require('helpers/util')).mix;
 TabGroup = (function() {
   function TabGroup() {
-    var index, maskView, menuWindow, offsetWidth, pages, tabGroup, tabs, touchStartX, touchStarted, _addWindowEvent, _catchBubble, _switchWindow, _toggleOpenMenu, _touchHandler;
+    var index, menuWindow, offsetWidth, pages, tabGroup, tabs, touchStartX, touchStarted, _addWindowEvent, _catchBubble, _menuDidClosed, _switchWindow, _toggleOpenMenu, _touchHandler;
     trace("start constructor");
     pages = [
       {
@@ -47,18 +47,11 @@ TabGroup = (function() {
     tabs[pages[index].dir].window = new (require("" + dir + "/" + pages[index].dir + "/Window"))(tabs[pages[index].dir]);
     menuWindow = new (require("" + dir + "/menu/Window"))();
     menuWindow.open();
-    maskView = Ti.UI.createView({
-      width: Ti.UI.FILL,
-      height: Ti.UI.FILL,
-      zIndex: 100,
-      visible: false
-    });
     _catchBubble = function(e) {
       var nextIndex;
       switch (e.btype) {
         case 'showMenu':
           _toggleOpenMenu();
-          maskView.visible = true;
           break;
         case 'didSelectMenu':
           nextIndex = e.boptions.index;
@@ -71,7 +64,7 @@ TabGroup = (function() {
           } else {
             _switchWindow(nextIndex);
           }
-          maskView.visible = false;
+          _menuDidClosed();
       }
     };
     _toggleOpenMenu = function() {
@@ -81,6 +74,9 @@ TabGroup = (function() {
         left: left
       }), function() {
         tabGroup.left = left;
+        if (left === 0) {
+          _menuDidClosed();
+        }
       });
     };
     _switchWindow = function(nextIndex) {
@@ -92,7 +88,6 @@ TabGroup = (function() {
       };
       tabGroup.animate(a, function() {
         var d;
-        tabs[pages[index].dir].window.remove(maskView);
         d = pages[nextIndex].dir;
         if (typeof tabs[d] === 'undefined') {
           tabs[d] = Ti.UI.createTab($$.tab);
@@ -101,7 +96,6 @@ TabGroup = (function() {
           tabGroup.addTab(tabs[d]);
           _addWindowEvent(nextIndex);
         }
-        tabs[d].window.add(maskView);
         tabGroup.setActiveTab(tabs[d]);
         tabGroup.animate(mix($$.animation, {
           left: 0
@@ -137,18 +131,20 @@ TabGroup = (function() {
             tabGroup.animate(mix($$.animation, {
               left: offsetWidth
             }), function() {
-              maskView.visible = true;
               tabGroup.left = offsetWidth;
             });
           } else {
             tabGroup.animate(mix($$.animation, {
               left: 0
             }), function() {
-              maskView.visible = false;
               tabGroup.left = 0;
+              _menuDidClosed();
             });
           }
       }
+    };
+    _menuDidClosed = function() {
+      tabs[pages[index].dir].window.fireEvent('menuDidClosed');
     };
     _addWindowEvent = function(idx) {
       var w;
