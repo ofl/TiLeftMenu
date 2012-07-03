@@ -88,8 +88,8 @@ class TabGroup
           tabs[d] = Ti.UI.createTab $$.tab
           tabs[d].window = new (require "#{dir}/#{pages[nextIndex].dir}/Window")(tabs[d])
           tabs[d].window.refresh pages[nextIndex].option
-          tabGroup.addTab tabs[d]
           _addWindowEvent nextIndex
+        tabGroup.setTabs [tabs[d]]
         tabGroup.setActiveTab tabs[d]
         tabGroup.animate mix($$.animation, left: 0), ()->
           index = nextIndex
